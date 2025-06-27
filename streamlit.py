@@ -2,6 +2,7 @@ import streamlit as st
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
+import openai
 import os
 
 # --- Configuration ---
@@ -32,19 +33,27 @@ source_of_wealth = st.text_area("Briefly describe your Source of Wealth")
 st.header("3. Ask Me Anything About KYC")
 st.write("Got a question about what documents to upload or how this works? Ask below.")
 
-# Initialize chat model and memory
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = ConversationBufferMemory(return_messages=True)
-    st.session_state.chat_chain = ConversationChain(
-        llm=ChatOpenAI(temperature=0.5),
-        memory=st.session_state.chat_history
-    )
+openai.api_key = "your-openai-key"  # replace with your actual key
 
-# Chat interface
+# Chatbot memory and interface
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
 user_input = st.text_input("Your Question", key="chat")
+
 if user_input:
-    response = st.session_state.chat_chain.run(user_input)
-    st.write("**AI Concierge:**", response)
+    st.session_state.chat_history.append(f"User: {user_input}")
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful KYC onboarding assistant."},
+            {"role": "user", "content": user_input}
+        ]
+    )
+    answer = response["choices"][0]["message"]["content"]
+    st.session_state.chat_history.append(f"AI Concierge: {answer}")
+    st.write("**AI Concierge:**", answer)
 
 # --- Final Submit ---
 st.header("4. Complete Onboarding")
