@@ -1,12 +1,15 @@
 import streamlit as st
+import os
+import openai  # <-- You forgot this import
+
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
-import os
 
 # --- Configuration ---
 OPENAI_API_KEY = "your-openai-api-key"  # Replace with your actual key
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+openai.api_key = OPENAI_API_KEY  # Set for direct openai calls
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="AI KYC Concierge", layout="centered")
@@ -15,11 +18,17 @@ st.write("Welcome to your AI onboarding concierge. Let's verify your identity an
 
 # --- Upload Document ---
 st.header("1. Upload Identification Document")
-id_doc = st.file_uploader("Upload your passport, NRIC, or government-issued ID (PDF or image)", type=["pdf", "png", "jpg", "jpeg"])
+id_doc = st.file_uploader(
+    "Upload your passport, NRIC, or government-issued ID (PDF or image)",
+    type=["pdf", "png", "jpg", "jpeg"]
+)
 
 if id_doc:
     st.success("Document uploaded successfully. Verifying... (mocked)")
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Check_mark_9x9.svg/2048px-Check_mark_9x9.svg.png", width=50)
+    st.image(
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Check_mark_9x9.svg/2048px-Check_mark_9x9.svg.png",
+        width=50
+    )
     st.write("✅ Face and document matched. Proceeding to next step.")
 
 # --- Basic Info Form ---
@@ -32,9 +41,6 @@ source_of_wealth = st.text_area("Briefly describe your Source of Wealth")
 st.header("3. Ask Me Anything About KYC")
 st.write("Got a question about what documents to upload or how this works? Ask below.")
 
-openai.api_key = "your-openai-key"  # replace with your actual key
-
-# Chatbot memory and interface
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
@@ -43,6 +49,7 @@ user_input = st.text_input("Your Question", key="chat")
 if user_input:
     st.session_state.chat_history.append(f"User: {user_input}")
 
+    # Direct OpenAI call
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -61,3 +68,4 @@ if st.button("Submit for Verification"):
         st.success(f"✅ Thank you {full_name}, your information has been submitted for review.")
     else:
         st.error("Please complete all fields and upload a valid ID document before submitting.")
+
